@@ -45,7 +45,7 @@ var contactSchema = new mongoose.Schema({
     Email: {type: String},
     Message: {type: String}
 });
-contact = mongoose.model('contact', contactSchema);
+contact = mongoose.model('contacts', contactSchema);
 
 app.post('/contact-send', function (req,res) {
         var contactinfo = new contact ({
@@ -64,21 +64,21 @@ app.post('/contact-send', function (req,res) {
 
 
 });
-
-app.get('/getAdminContactdata', function (req,res) {
-    contact.find({'Description' : new RegExp(req.body.keyword, 'i')}, function (err, docs1) {
-        if (err) {
-            throw err;
-        }
-        else {
-            res.type('text/plain');
-            res.json(docs1);
-           // res.send('gb');
-        }
-    });
-
+app.get('/getAdminContactdata', function (req, res) {
+    contact.find()
+        .then(function (data) {
+            if (data) {
+                res.send(data);
+            } else {
+                res.sendStatus(404);
+            }
+        })
+        .catch(function (err) {
+            res.status(400).send(err);
+        });
 
 });
+
 
 //app.use('/contact-send', require('./routes/contact'));
 
