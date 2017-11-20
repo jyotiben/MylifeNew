@@ -1,0 +1,18 @@
+<table border="">
+
+    <tr>
+        <td>Name</td>
+        <td>Email</td>
+        <td>Message</td>
+    </tr>
+<% for(var i=0; i<contact.length; i++) {%>
+
+<tr>
+
+    <td><%= contact[i].Name %></td>
+    <td><%= contact[i].Email %></td>
+    <td><%= contact[i].Message %></td>
+</tr>
+
+<% } %>
+</table>

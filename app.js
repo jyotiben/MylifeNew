@@ -1,4 +1,5 @@
 var express = require('express');
+var app = express();
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
@@ -15,9 +16,6 @@ if (dbConn) {
 } else {
     console.log('fail');
 }
-
-var url = 'mongodb://localhost:27017/Trip';
-var app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -38,7 +36,7 @@ app.use('/about', require('./routes/about'));
 app.use('/trainer', require('./routes/trainer'));
 app.use('/schedule', require('./routes/schedule'));
 app.use('/classes', require('./routes/classes'));
-app.use('/admin', require('./routes/admin/admincontact'));
+app.use('/admincontact', require('./routes/admin/admincontact'));
 
 var contactSchema = new mongoose.Schema({
     Name: {type: String},
@@ -46,12 +44,13 @@ var contactSchema = new mongoose.Schema({
     Message: {type: String}
 });
 contact = mongoose.model('contacts', contactSchema);
-
+// insert data into contact table
 app.post('/contact-send', function (req,res) {
         var contactinfo = new contact ({
             Name:  req.body.name,
             Email:  req.body.email,
-            Message: req.body.message,
+            Message: req.body.message
+
         });
         contactinfo.save(function(err, thor) {
             if (err){
@@ -61,14 +60,15 @@ app.post('/contact-send', function (req,res) {
                 return res.redirect("/");
             }
         });
-
-
 });
-app.get('/getAdminContactdata', function (req, res) {
-    contact.find()
+
+/* contactall = contact.find({_id: { $in : contact.id } },{name: { $in : contact.name } } );
+app.get('/getAdminContactdata', function (req, res, next) {
+    contactall
         .then(function (data) {
             if (data) {
-                res.send(data);
+               // res.send(data);
+                res.render('admin/contactdatashow');
             } else {
                 res.sendStatus(404);
             }
@@ -76,12 +76,18 @@ app.get('/getAdminContactdata', function (req, res) {
         .catch(function (err) {
             res.status(400).send(err);
         });
-
+}); */
+// show data in admin side
+app.get('/getAdminContactdata', function (req, res) {
+    contact.find(function (err, docs) {
+        if(docs){
+            console.log(docs);
+            res.render('admin/contactdatashow', {
+                contact: docs});}
+        else
+        {res.status(400).send(err)}
+        });
 });
-
-
-//app.use('/contact-send', require('./routes/contact'));
-
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
