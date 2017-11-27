@@ -7,6 +7,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 
+
 var dbConn = mongoose.connect('mongodb://localhost/Trip',{
  useMongoClient:true,
 
@@ -37,6 +38,8 @@ app.use('/trainer', require('./routes/trainer'));
 app.use('/schedule', require('./routes/schedule'));
 app.use('/classes', require('./routes/classes'));
 app.use('/admincontact', require('./routes/admin/admincontact'));
+app.use('/admindashboard', require('./routes/admin/admindashboard'));
+
 
 var contactSchema = new mongoose.Schema({
     Name: {type: String},
@@ -82,12 +85,25 @@ app.get('/getAdminContactdata', function (req, res) {
     contact.find(function (err, docs) {
         if(docs){
             console.log(docs);
-            res.render('admin/contactdatashow', {
-                contact: docs});}
+            res.send(docs);
+        }
         else
         {res.status(400).send(err)}
         });
 });
+
+// call remove  category
+app.post('/removecontact', function (req, res) {
+    contact.remove({_id : req.body.id}, function(err) {
+        if (!err) {
+            res.send("done");
+        }
+        else {
+            res.send("error");
+        }
+    });
+});
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

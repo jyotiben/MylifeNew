@@ -1,0 +1,57 @@
+<script src="/javascripts/jquery-1.11.2.min.js" type="text/javascript"></script>
+
+<button type="submit" onclick="get()">contact</button>
+
+<script type="text/javascript">
+   function get() {
+       $.ajax({
+           type: 'GET',
+           url: 'http://localhost:3000/getAdminContactdata',
+           data : {},
+           dataType: 'json',
+           success: function (resp) {
+                $('#tBody').html(JSON.stringify(resp, "", 2));
+                   },
+           error: function (req, status, err) {
+               console.log('something went wrong', status, err);
+           }
+       });
+   };
+
+</script>
+<pre id="tBody"></pre>
+
+<table border="" id="tBody">
+
+    <tr>
+        <td>Name</td>
+        <td>Email</td>
+        <td>Message</td>
+    </tr>
+    <% for(var i=0; i<contact.length; i++) {%>
+
+    <tr>
+
+        <td><%= contact[i].Name %></td>
+        <td><%= contact[i].Email %></td>
+        <td><%= contact[i].Message %></td>
+        <td><a href="#" class=""  onclick="del()" >delete</a></td>
+    </tr>
+
+    <% } %>
+
+</table>
+<script>
+    function del  () {
+        $.post("/removecontact",{id:id},function(data){
+            alert(" delete success");
+            if(data==='success')
+            {
+                alert(" delete success");
+            }
+            else {
+                alert("Unable to delete. Some error occured!!");
+            }
+        });
+    }
+</script>

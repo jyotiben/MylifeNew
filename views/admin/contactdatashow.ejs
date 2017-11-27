@@ -1,3 +1,4 @@
+
 <table border="">
 
     <tr>
@@ -12,7 +13,23 @@
     <td><%= contact[i].Name %></td>
     <td><%= contact[i].Email %></td>
     <td><%= contact[i].Message %></td>
+    <td><a href="#" class=""  onclick="del()" >delete</a></td>
 </tr>
 
 <% } %>
+
 </table>
+    <script>
+        function del  () {
+            $.post("/removecontact",{id:id},function(data){
+                alert(" delete success");
+                if(data==='success')
+                {
+                    alert(" delete success");
+                }
+                else {
+                    alert("Unable to delete. Some error occured!!");
+                }
+            });
+        }
+        </script>
