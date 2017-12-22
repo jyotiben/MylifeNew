@@ -1,3 +1,4 @@
+
 <header id="fh5co-header-section">
     <div class="container">
         <div class="nav-header">
@@ -5,6 +6,15 @@
             <h1 id="fh5co-logo"><a href="/">Fit<span>ness</span></a></h1>
             <!-- START #fh5co-menu-wrap -->
             <nav id="fh5co-menu-wrap" role="navigation">
+
+
+                <input type="text" name="search" placeholder="please search here">
+                <button id="popup" type="submit" onclick="search()">SEARCH</button>
+
+
+                <!-- <img src="images/search.gif"  width="32px" height="32px" onclick="/classes" > -->
+
+
                 <ul class="sf-menu" id="fh5co-primary-menu">
                     <li class="active">
                         <a href="/">Home</a>
@@ -17,14 +27,21 @@
                             <li>
                                 <a href="#" class="fh5co-sub-ddown">Free HTML5</a>
                                 <ul class="fh5co-sub-menu">
-                                    <li><a href="http://freehtml5.co/preview/?item=build-free-html5-bootstrap-template" target="_blank">Build</a></li>
-                                    <li><a href="http://freehtml5.co/preview/?item=work-free-html5-template-bootstrap" target="_blank">Work</a></li>
-                                    <li><a href="http://freehtml5.co/preview/?item=light-free-html5-template-bootstrap" target="_blank">Light</a></li>
-                                    <li><a href="http://freehtml5.co/preview/?item=relic-free-html5-template-using-bootstrap" target="_blank">Relic</a></li>
-                                    <li><a href="http://freehtml5.co/preview/?item=display-free-html5-template-using-bootstrap" target="_blank">Display</a></li>
-                                    <li><a href="http://freehtml5.co/preview/?item=sprint-free-html5-template-bootstrap" target="_blank">Sprint</a></li>
+                                    <li><a href="http://freehtml5.co/preview/?item=build-free-html5-bootstrap-template"
+                                           target="_blank">Build</a></li>
+                                    <li><a href="http://freehtml5.co/preview/?item=work-free-html5-template-bootstrap"
+                                           target="_blank">Work</a></li>
+                                    <li><a href="http://freehtml5.co/preview/?item=light-free-html5-template-bootstrap"
+                                           target="_blank">Light</a></li>
+                                    <li>
+                                        <a href="http://freehtml5.co/preview/?item=relic-free-html5-template-using-bootstrap"
+                                           target="_blank">Relic</a></li>
+                                    <li>
+                                        <a href="http://freehtml5.co/preview/?item=display-free-html5-template-using-bootstrap"
+                                           target="_blank">Display</a></li>
+                                    <li><a href="http://freehtml5.co/preview/?item=sprint-free-html5-template-bootstrap"
+                                           target="_blank">Sprint</a></li>
                                 </ul>
-                            </li>
                             <li><a href="#">UI Animation</a></li>
                             <li><a href="#">Copywriting</a></li>
                             <li><a href="#">Photography</a></li>
@@ -41,3 +58,22 @@
         </div>
     </div>
 </header>
+
+<script>
+    function search() {
+        alert('d');
+        $.ajax({
+            type: 'POST',
+            url: 'http://localhost:3000/bing1',
+            // data: {"cid": cid},
+            dataType: 'json',
+            success: function (result) {
+                if (result) {
+                    //location.reload();
+                    alert(result);
+                }
+            }
+
+        });
+    }
+</script>

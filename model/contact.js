@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 var contactSchema = new mongoose.Schema({
     Name : { type: String },
  Email : { type: String },
- Message : { type: String }*/
+ Message : { type: String }
  });
 
 

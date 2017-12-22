@@ -1,0 +1,32 @@
+var express = require('express');
+var router = express.Router();
+const mongoose = require('mongoose');
+var assert = require('assert');
+
+
+router.get('/', function (req, res, next) {
+    if (req.session.adminemail) {
+        res.redirect('/adminhome');
+    } else {
+        res.render('admin/adminlogin');
+    }
+});
+
+router.post('/admin_add_login', (req, res, next) => {
+    let AddSingup = mongoose.model("AddSingup");
+
+    AddSingup.find({'adminemail': req.body.admin_email, 'adminpassword': req.body.admin_pw}, function (err, data) {
+        if (data.length == 1) {
+            req.session.adminemail = req.body.admin_email;
+            req.session.adminpassword = true;
+            res.redirect('/adminhome');
+        }
+        else {
+            res.send('your data is incorrect')
+        }
+    });
+
+});
+
+
+module.exports = router;
