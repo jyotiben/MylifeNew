@@ -1,0 +1,166 @@
+function getUserData($dbh, $dbh2, $start, $end)
+{
+    /*
+    * function to get all the user stat data for private kpi
+    * see Odoo-Issue 8 (KPI)
+    * @return array with chart_data about Useractivity
+    */
+
+    $r_data = array();
+    $newdate = strtotime('-9 months', strtotime($end));
+    $newdate = date('Y-m-j', $newdate);
+
+
+    // (A) reactivate (1) -> user without uploaded tracks
+    $sth = $dbh2->prepare("SELECT DISTINCT(u.nickname) FROM user u 
+                           where   u.id  IN(SELECT `submission_user`.`user_id` from `submission_user`) AND
+                           u.member_since   >= '2015-07-01' AND u.nickname NOT IN(SELECT DISTINCT(u.nickname) FROM user u LEFT JOIN submission_user su ON su.user_id = u.id  
+                            LEFT JOIN submission s ON s.id = su.submission_id
+                             WHERE  s.date_time BETWEEN  :start  and  :end) ");
+    $sth->execute(array(
+        ":start" => $newdate, ":end" => $end,
+    ));
+    $track_user = $sth->fetchAll(PDO::FETCH_COLUMN, 0);
+
+    // (A) reactivate (2) -> user without submissions
+    $sth = $dbh2->prepare("SELECT DISTINCT(u.nickname) FROM user u 
+                           where   u.id  IN(SELECT `submission_user`.`user_id` from `submission_user`) AND
+                           u.member_since   >= '2015-07-01' AND u.nickname NOT IN(SELECT DISTINCT(u.nickname) FROM user u LEFT JOIN submission_user su ON su.user_id = u.id  
+                            LEFT JOIN track_user tu ON tu.user_id = u.id
+                            LEFT JOIN track ON track.id = tu.track_id                       
+                            where track.uploaded_timestamp BETWEEN  :start  and :end) ");
+
+    $sth->execute(array(
+        ":start" => $newdate ,":end" => $end,
+    ));
+    $submit_user = $sth->fetchAll(PDO::FETCH_COLUMN, 0);
+
+
+    // (A) reactivate (3) merge
+    $ids_reactivated = array_unique(array_merge($track_user, $submit_user));
+    $count_reactivated = count($ids_reactivated);
+
+
+  /*  $l = print_r($count_reactivated,1);
+    error_log($l);*/
+    // DEBUG
+    /*
+    error_log("track, submit, count_total");
+    error_log(print_r($track_user,true));
+    error_log(print_r(count($track_user),true));
+    error_log(print_r($submit_user,true));
+    error_log(print_r(count($submit_user),true));
+    error_log(print_r($count_reactivated,true));*/
+
+    // (B) placed -> user whose tracks got placed
+    $sth = $dbh->prepare("SELECT c.winner_track_ID FROM cases c
+                        INNER JOIN flows ON flows.case_id = c.id
+                        INNER JOIN tasks ON flows.id = tasks.flow_id
+                        WHERE tasks.step = 5 AND tasks.completed is not NULL
+                        AND c.winner_track_ID is not NULL AND c.winner_track_ID != ''
+                        AND tasks.completed > :start AND tasks.completed < :end ");
+
+    $sth->execute(array(
+        ":start" => $start,
+        ":end" => $end
+    ));
+    $winner_track_ids = $sth->fetchAll(PDO::FETCH_COLUMN, 0);
+    $winner_track_ids = array_unique($winner_track_ids);
+
+    $user_ids_placed = array();
+    foreach ($winner_track_ids as $w_id) {
+        $sth = $dbh2->prepare("SELECT user.id FROM user
+                          INNER JOIN track_user ON track_user.user_id = user.id
+                          INNER JOIN track ON track_user.track_id = track.id
+                          WHERE track.id = :t_id");
+        $sth->execute(array(
+            ":t_id" => $w_id
+        ));
+        $user_ids_placed[] = $sth->fetch(PDO::FETCH_COLUMN, 0);
+    }
+    $user_ids_placed = array_unique($user_ids_placed);
+    $count_placed_user = count(array_unique(array_diff($user_ids_placed, $ids_reactivated)));
+
+    //DEBUG
+    /*
+    error_log("winner_track_ids, user_ids_placed, count");
+    error_log(print_r($winner_track_ids,true));
+    error_log(print_r(count($winner_track_ids),true));
+    error_log(print_r($user_ids_placed,true));
+    error_log(print_r(count($user_ids_placed),true));
+    error_log(print_r($count_placed_user,true));*/
+
+    // (C) shortlisted / on playlist (1) -> user whose tracks got placed on a playlist by Admin or NeedMusic
+    $sth = $dbh2->prepare("SELECT Distinct user.id FROM user
+                        INNER JOIN track_user ON user.id = track_user.user_id
+                        INNER JOIN playlist_track ON track_user.track_id = playlist_track.track_id
+                        INNER JOIN playlist_user__created ON playlist_track.playlist_id = playlist_user__created.playlist_id
+                        INNER JOIN account_user ON playlist_user__created.user_id = account_user.user_id
+                        INNER JOIN account ON account_user.account_id = account.id
+                        WHERE account.is_admin = 1 OR account.type = 'NeedMusic' AND playlist_track.added > :start AND playlist_track.added < :end");
+    $sth->execute(array(
+        ":start" => $start,
+        ":end" => $end
+    ));
+    $playlisted_user = $sth->fetchAll(PDO::FETCH_COLUMN, 0);
+
+    // (C) shortlisted / on playlist (2) -> user whose tracks got shortlisted
+    $sth = $dbh2->prepare("SELECT Distinct user.id FROM user
+                        INNER JOIN submission_user ON user.id = submission_user.user_id
+                        INNER JOIN submission ON submission_user.submission_id = submission.id
+                        WHERE submission.on_shortlist = 1 AND shortlisted_datetime > :start AND shortlisted_datetime < :end");
+    $sth->execute(array(
+        ":start" => $start,
+        ":end" => $end
+    ));
+    $shortlisted_user = $sth->fetchAll(PDO::FETCH_COLUMN, 0);
+
+    // (C) shortlisted / on playlist (3) -> merges with (A) und (B)
+    $user_ids_shortlisted_p = array_unique(array_merge($playlisted_user, $shortlisted_user));
+    $count_user_shortlisted_p = count(array_unique(array_diff($user_ids_shortlisted_p, $ids_reactivated, $user_ids_placed)));
+
+    // (D) submission to request ->
+    $sth = $dbh2->prepare("SELECT Distinct user.id FROM user
+                        INNER JOIN submission_user ON user.id = submission_user.user_id
+                        INNER JOIN submission ON submission_user.submission_id = submission.id
+                        WHERE submission.date_time > :start AND submission.date_time < :end");
+
+    $sth->execute(array(
+        ":start" => $start,
+        ":end" => $end
+    ));
+    $submission_users = $sth->fetchAll(PDO::FETCH_COLUMN, 0);
+    $count_submission_user = count(array_unique(array_diff($submission_users, $user_ids_shortlisted_p, $ids_reactivated, $user_ids_placed)));
+
+    // (E) converted / created -> "new" Users not listed in A, B or C
+    $sth = $dbh2->prepare("SELECT Distinct user.id FROM user
+                        WHERE user.member_since > :start AND user.member_since < :end");
+
+    $sth->execute(array(
+        ":start" => $start,
+        ":end" => $end
+    ));
+    $new_users = $sth->fetchAll(PDO::FETCH_COLUMN, 0);
+    $count_new_user = count(array_unique(array_diff($new_users, $submission_users, $user_ids_shortlisted_p, $ids_reactivated, $user_ids_placed)));
+
+
+    // (F) researched + contacted ->
+
+    $sth = $dbh2->prepare("SELECT Distinct user.id FROM user
+                        INNER JOIN contactedartist_user ON user.id = contactedartist_user.user_id
+                        INNER JOIN contactedartist on contactedartist_user.contactedartist_id = contactedartist.id
+                        WHERE converted is NULL
+                        AND CASE WHEN contactedartist.contacted >= contactedartist.researched
+                            THEN contactedartist.contacted > :start AND contactedartist.contacted < :end
+                            ELSE contactedartist.researched > :start AND contactedartist.researched < :end END");
+
+    $sth->execute(array(
+        ":start" => $start,
+        ":end" => $end
+    ));
+    $r_c_user_ids = $sth->fetchAll(PDO::FETCH_COLUMN, 0);
+    $count_researched_contacted = count(array_unique($r_c_user_ids));
+
+    return array($count_researched_contacted, $count_new_user, $count_submission_user, $count_user_shortlisted_p, $count_placed_user, $count_reactivated);
+
+}
