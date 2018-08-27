@@ -164,3 +164,30 @@ function getUserData($dbh, $dbh2, $start, $end)
     return array($count_researched_contacted, $count_new_user, $count_submission_user, $count_user_shortlisted_p, $count_placed_user, $count_reactivated);
 
 }
+
+
+
+
+
+<?php
+
+$encoding = 'ISO 8859-1';
+
+$input = file_get_contents('testout.csv');
+
+$file_content = explode("\n",$input);
+
+
+
+foreach($file_content as $fc){
+    $output = @iconv("UTF-8", $encoding, $fc);
+    if($output == ''){
+        $i =    str_replace('ś','s',$fc);
+        echo $fc;
+        echo $i;
+    }
+}
+
+
+?>
+
