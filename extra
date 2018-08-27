@@ -168,26 +168,18 @@ function getUserData($dbh, $dbh2, $start, $end)
 
 
 
-
-<?php
-
-$encoding = 'ISO 8859-1';
-
 $input = file_get_contents('testout.csv');
 
 $file_content = explode("\n",$input);
 
 
 
-foreach($file_content as $fc){
-    $output = @iconv("UTF-8", $encoding, $fc);
-    if($output == ''){
-        $i =    str_replace('ś','s',$fc);
-        echo $fc;
-        echo $i;
-    }
-}
+$arr = array("é" => "e", "è" => "e","à" => "a","ù" => "u", "â" => "a","ê" => "e","î" => "i", "ô" => "o","û" => "u","ë" => "e", "ï" => "i","ç" => "c","ü" => "u","ÿ" => "y", "œ" => "o","æ" => "a",
+             "É" => "E", "È" => "E","À" => "A","Ù" => "U", "Â" => "A","Ê" => "E","Î" => "I", "Ô" => "O","Û" => "U","Ë" => "E", "Ï" => "I","Ç" => "C","Ü" => "U","Ÿ" => "Y", "Œ" => "O","Æ" => "A",
+             "ą" => "a", "ć" => "c","ę" => "e","ł" => "l", "ń" => "n","ó" => "o","ś" => "s", "ź" => "z","ż" => "z",
+             "Ą" => "A", "Ć" => "C","Ę" => "E","Ł" => "L", "Ń" => "N","Ó" => "O","Ś" => "S", "Ź" => "Z","Ż" => "Z",
+    );
 
 
-?>
+echo strtr($input,$arr);
 
